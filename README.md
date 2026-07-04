@@ -114,7 +114,7 @@ MIKROTIK_IP=10.10.3.1        # IP Address Router Mikrotik Anda
 MIKROTIK_USER=sistem         # Username dengan hak akses API Mikrotik
 MIKROTIK_PASSWORD=sistem     # Password user API Mikrotik
 MIKROTIK_API_PORT=8728       # Port API Mikrotik (default: 8728)
-WEB_PORT=8080                # Port untuk mengakses Web Dashboard
+WEB_PORT=31337                # Port untuk mengakses Web Dashboard
 ```
 
 > [!IMPORTANT]
