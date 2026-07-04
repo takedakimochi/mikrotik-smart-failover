@@ -1,0 +1,24 @@
+2026-07-04 19:44:56 [INFO] =================================================================
+2026-07-04 19:44:56 [INFO]    ⚡ SISTEM SMART FAILOVER MIKROTIK - MONITORING DIMULAI ⚡
+2026-07-04 19:44:56 [INFO]    📂 File Log disimpen di: /home/safa/jaringan/aplikasi/mikrotik-sistem-failover/logs/monitor_20260704.log
+2026-07-04 19:44:56 [INFO] =================================================================
+2026-07-04 19:44:56 [INFO] 🌐 HTTP Server dashboard jalan di http://localhost:3002 ya bos!
+2026-07-04 19:52:53 [INFO] [!] Monitoring dihentikan oleh admin ganteng (Ctrl+C). Bye!
+2026-07-04 19:54:57 [INFO] =================================================================
+2026-07-04 19:54:57 [INFO]    ⚡ SISTEM SMART FAILOVER MIKROTIK - MONITORING DIMULAI ⚡
+2026-07-04 19:54:57 [INFO]    📂 File Log disimpen di: /home/safa/jaringan/aplikasi/mikrotik-sistem-failover/logs/monitor_20260704.log
+2026-07-04 19:54:57 [INFO] =================================================================
+2026-07-04 19:54:57 [INFO] 🌐 HTTP Server dashboard jalan di http://localhost:3002 ya bos!
+2026-07-04 19:55:10 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:55:11 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:55:23 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:55:24 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:56:54 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:56:56 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:57:05 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:57:06 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:57:09 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:57:10 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:57:31 [WARNING] ⚠️ [ISP UTAMA] Terdeteksi kondisi buruk (2/3 monitor DOWN). Mulai menghitung durasi down (Threshold: 60s)...
+2026-07-04 19:57:32 [INFO] ✅ [ISP UTAMA] Kondisi kembali normal (0 atau 1 monitor fail). Timer down direset.
+2026-07-04 19:58:50 [INFO] [!] Monitoring dihentikan oleh admin ganteng (Ctrl+C). Bye!

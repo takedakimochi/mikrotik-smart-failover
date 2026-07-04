@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mikrotik Failover</title>
+    <!-- Import Google Fonts - Outfit & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --panel-bg: rgba(22, 26, 37, 0.65);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f5f6f9;
+            --text-secondary: #94a3b8;
+
+            /* Accent Colors */
+            --color-emerald: #10b981;
+            --color-rose: #f43f5e;
+            --color-amber: #f59e0b;
+            --color-blue: #3b82f6;
+            --color-purple: #8b5cf6;
+
+            /* Glow effects */
+            --glow-emerald: rgba(16, 185, 129, 0.25);
+            --glow-rose: rgba(244, 63, 94, 0.25);
+            --glow-blue: rgba(59, 130, 246, 0.2);
+            --glow-amber: rgba(245, 158, 11, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 10% 10%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(139, 92, 246, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            flex-grow: 1;
+        }
+
+        /* Glassmorphism Panel base */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        /* Header section */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--color-blue), var(--color-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--glow-blue);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .title-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .title-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Server status controls */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-badge.running .dot {
+            background-color: var(--color-emerald);
+            box-shadow: 0 0 10px var(--color-emerald);
+            animation: pulse-green 1.5s infinite;
+        }
+
+        .status-badge.stopped .dot {
+            background-color: var(--color-rose);
+            box-shadow: 0 0 10px var(--color-rose);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        select.select-refresh {
+            background: rgba(11, 12, 16, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Overview stats section */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* Target status Grid */
+        .targets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .target-card {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .target-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--color-blue);
+        }
+
+        .target-card.status-ok::before {
+            background: var(--color-emerald);
+        }
+
+        .target-card.status-rto::before {
+            background: var(--color-rose);
+        }
+
+        .target-card.status-warning::before {
+            background: var(--color-amber);
+        }
+
+        .target-card.status-stabilisasi::before {
+            background: var(--color-blue);
+        }
+
+        .target-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .target-info h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .target-ip {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+            display: inline-block;
+        }
+
+        .target-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            text-transform: uppercase;
+        }
+
+        .target-card.status-ok .target-status-indicator {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .target-card.status-rto .target-status-indicator {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--color-rose);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+
+        .target-card.status-warning .target-status-indicator {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--color-amber);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .target-card.status-stabilisasi .target-status-indicator {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--color-blue);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        /* Metric progress bar */
+        .metric-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .metric-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .metric-progress-container {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .metric-progress-bar {
+            height: 100%;
+            border-radius: 99px;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .target-card.status-ok .metric-progress-bar {
+            background: linear-gradient(to right, var(--color-emerald), #34d399);
+            box-shadow: 0 0 8px var(--glow-emerald);
+        }
+
+        .target-card.status-rto .metric-progress-bar {
+            background: linear-gradient(to right, var(--color-rose), #fb7185);
+            box-shadow: 0 0 8px var(--glow-rose);
+        }
+
+        .target-card.status-warning .metric-progress-bar {
+            background: linear-gradient(to right, var(--color-amber), #fbbf24);
+            box-shadow: 0 0 8px var(--glow-amber);
+        }
+
+        .target-card.status-stabilisasi .metric-progress-bar {
+            background: linear-gradient(to right, var(--color-blue), #60a5fa);
+            box-shadow: 0 0 8px var(--glow-blue);
+        }
+
+        /* Grid metrics inside card */
+        .card-metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .card-metric {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .card-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .card-metric-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .action-log {
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .action-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .action-value {
+            font-weight: 500;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            word-break: break-all;
+        }
+
+        /* Logs section */
+        .logs-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex-grow: 1;
+            min-height: 300px;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-box {
+            background-color: #05070a;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            overflow-y: auto;
+            max-height: 350px;
+            min-height: 250px;
+            flex-grow: 1;
+            box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .log-line {
+            white-space: pre-wrap;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 0.2rem;
+        }
+
+        /* Log Colors */
+        .log-info {
+            color: #a7f3d0;
+            /* Soft emerald */
+        }
+
+        .log-warning {
+            color: #fef08a;
+            /* Soft yellow */
+        }
+
+        .log-error,
+        .log-critical {
+            color: #fecdd3;
+            /* Soft red */
+        }
+
+        /* Animations */
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(244, 63, 94, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(244, 63, 94, 0);
+            }
+        }
+
+        @keyframes pulse-amber {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+        }
+
+        @keyframes pulse-blue {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Responsive adaptation */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .container {
+                gap: 1.25rem;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .logo-area {
+                margin-bottom: 0.5rem;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+                width: 100%;
+                justify-content: space-between;
+                gap: 0.5rem;
+            }
+
+            .controls select.select-refresh,
+            .controls .btn,
+            .controls .status-badge {
+                flex-grow: 1;
+                justify-content: center;
+                font-size: 0.85rem;
+                padding: 0.4rem 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+            }
+
+            #stat-updated {
+                font-size: 1.05rem !important;
+            }
+
+            .targets-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+
+            .terminal-box {
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            .glass-panel {
+                padding: 1rem;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .title-text h1 {
+                font-size: 1.2rem;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            #stat-updated {
+                font-size: 0.95rem !important;
+            }
+
+            .card-metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="logo-area">
+                <div class="logo-icon">📶</div>
+                <div class="title-text">
+                    <h1>Failover System</h1>
+                    <p>Sistem Otomatis Pemindah Jalur Internet</p>
+                </div>
+            </div>
+            <div class="controls">
+                <div id="service-status" class="status-badge running">
+                    <span class="dot"></span>
+                    <span class="status-label">Monitoring Aktif</span>
+                </div>
+
+                <select id="refresh-interval" class="select-refresh" onchange="setupRefresh()">
+                    <option value="2000">Refresh: 2s</option>
+                    <option value="5000" selected>Refresh: 5s</option>
+                    <option value="10000">Refresh: 10s</option>
+                    <option value="0">Refresh: Off</option>
+                </select>
+
+                <button class="btn" onclick="fetchData()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Overview -->
+        <section class="overview-grid">
+            <div class="glass-panel stat-card">
+                <span class="stat-label">Terakhir Diperbarui</span>
+                <span id="stat-updated" class="stat-value"
+                    style="font-size: 1.3rem; line-height: 1.8rem; height: 1.8rem; display: flex; align-items: center;">-</span>
+            </div>
+            <div class="glass-panel stat-card">
+                <span class="stat-label">Total Target</span>
+                <span id="stat-targets-count" class="stat-value">2</span>
+            </div>
+            <div class="glass-panel stat-card">
+                <span class="stat-label">Siklus Berjalan</span>
+                <span id="stat-cycle" class="stat-value">-</span>
+            </div>
+        </section>
+
+        <!-- Target Cards -->
+        <section class="targets-grid" id="targets-container">
+            <!-- Target 1 (Dummy loading state) -->
+            <div class="glass-panel target-card status-ok" id="card-target1">
+                <div class="target-header">
+                    <div class="target-info">
+                        <h3 id="ip-target1"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 600;">...
+                        </h3>
+                    </div>
+                    <div id="badge-target1" class="target-status-indicator">
+                        Online
+                    </div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-labels">
+                        <span>Packet Loss</span>
+                        <span id="loss-val-target1">0%</span>
+                    </div>
+                    <div class="metric-progress-container">
+                        <div id="progress-target1" class="metric-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="card-metrics-grid">
+                    <div class="card-metric">
+                        <span class="card-metric-label">Sukses</span>
+                        <span id="success-target1" class="card-metric-value">-</span>
+                    </div>
+                    <div class="card-metric">
+                        <span class="card-metric-label">Gagal (RTO)</span>
+                        <span id="fail-target1" class="card-metric-value">-</span>
+                    </div>
+                </div>
+                <div class="action-log">
+                    <span class="action-label">Aksi Terakhir Mikrotik</span>
+                    <span id="action-target1" class="action-value">Memuat...</span>
+                </div>
+            </div>
+
+            <!-- Target 2 (Dummy loading state) -->
+            <div class="glass-panel target-card status-ok" id="card-target2">
+                <div class="target-header">
+                    <div class="target-info">
+                        <h3 id="ip-target2"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 600;">...
+                        </h3>
+                    </div>
+                    <div id="badge-target2" class="target-status-indicator">
+                        Online
+                    </div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-labels">
+                        <span>Packet Loss</span>
+                        <span id="loss-val-target2">0%</span>
+                    </div>
+                    <div class="metric-progress-container">
+                        <div id="progress-target2" class="metric-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="card-metrics-grid">
+                    <div class="card-metric">
+                        <span class="card-metric-label">Sukses</span>
+                        <span id="success-target2" class="card-metric-value">-</span>
+                    </div>
+                    <div class="card-metric">
+                        <span class="card-metric-label">Gagal (RTO)</span>
+                        <span id="fail-target2" class="card-metric-value">-</span>
+                    </div>
+                </div>
+                <div class="action-log">
+                    <span class="action-label">Aksi Terakhir Mikrotik</span>
+                    <span id="action-target2" class="action-value">Memuat...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Terminal Log -->
+        <section class="glass-panel logs-section">
+            <div class="logs-header">
+                <h2>📟 Log Aktivitas Monitoring</h2>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Menampilkan 5 log terakhir</span>
+            </div>
+            <div class="terminal-box" id="terminal-logs">
+                <div class="log-line log-info">Mempersiapkan monitoring system logs...</div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="glass-panel"
+            style="text-align: center; padding: 1rem; display: flex; justify-content: center; align-items: center; border-top: 1px solid var(--panel-border);">
+            <div
+                style="font-size: 0.9rem; color: var(--text-secondary); letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                <span
+                    style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">SAFA
+                    @ LDP Blitar</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script JavaScript untuk update Realtime -->
+    <script>
+        let refreshTimer = null;
+
+        function formatLastUpdate(dateStr) {
+            if (!dateStr) return '-';
+
+            const parts = dateStr.split(' ');
+            if (parts.length < 2) return dateStr;
+
+            const dateParts = parts[0].split('-');
+            const timeStr = parts[1];
+
+            if (dateParts.length < 3) return dateStr;
+
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]);
+            const day = parseInt(dateParts[2]);
+
+            const monthNames = [
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            ];
+
+            const monthName = monthNames[month - 1] || '';
+            const dateObj = new Date(year, month - 1, day);
+            const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const dayName = dayNames[dateObj.getDay()] || '';
+
+            return `${dayName}, ${day} ${monthName} ${year} ${timeStr} WIB`;
+        }
+
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error("Gagal memuat status API:", error);
+
+                // Update Badge Server Status ke Error
+                const svcStatus = document.getElementById('service-status');
+                svcStatus.className = 'status-badge stopped';
+                svcStatus.querySelector('.status-label').textContent = 'Server Offline / API Gagal';
+            }
+        }
+
+        function updateUI(data) {
+            // Server Status Badge
+            const svcStatus = document.getElementById('service-status');
+            if (data.status === "Running") {
+                svcStatus.className = 'status-badge running';
+                svcStatus.querySelector('.status-label').textContent = 'Monitoring Aktif';
+            } else {
+                svcStatus.className = 'status-badge stopped';
+                svcStatus.querySelector('.status-label').textContent = `Status: ${data.status}`;
+            }
+
+            // Stats Overview
+            document.getElementById('stat-cycle').textContent = data.cycle || '0';
+            document.getElementById('stat-updated').textContent = formatLastUpdate(data.last_update);
+
+            // Target Cards
+            if (data.targets) {
+                Object.keys(data.targets).forEach(key => {
+                    const target = data.targets[key];
+
+                    // Update IP
+                    const ipElem = document.getElementById(`ip-${key}`);
+                    if (ipElem) {
+                        let ipText = target.ip;
+                        if (ipText === "8.8.8.8, 1.1.1.1, 9.9.9.9") {
+                            ipText = "JALUR UTAMA";
+                        } else if (ipText === "8.8.4.4, 1.0.0.1, 149.112.112.112") {
+                            ipText = "JALUR CADANGAN";
+                        }
+                        ipElem.textContent = ipText;
+                    }
+
+                    // Update Status Card border & Status Badge (Online vs Offline/RTO)
+                    const cardElem = document.getElementById(`card-${key}`);
+                    const badgeElem = document.getElementById(`badge-${key}`);
+
+                    if (target.status === "OK") {
+                        if (cardElem) {
+                            cardElem.className = 'glass-panel target-card status-ok';
+                        }
+                        if (badgeElem) {
+                            badgeElem.textContent = 'ONLINE';
+                            badgeElem.style.animation = 'pulse-green 1.5s infinite';
+                        }
+                    } else if (target.status === "WARNING") {
+                        if (cardElem) {
+                            cardElem.className = 'glass-panel target-card status-warning';
+                        }
+                        if (badgeElem) {
+                            badgeElem.textContent = 'WARNING';
+                            badgeElem.style.animation = 'pulse-amber 1.5s infinite';
+                        }
+                    } else if (target.status === "STABILISASI") {
+                        if (cardElem) {
+                            cardElem.className = 'glass-panel target-card status-stabilisasi';
+                        }
+                        if (badgeElem) {
+                            badgeElem.textContent = 'STABILISASI';
+                            badgeElem.style.animation = 'pulse-blue 1.5s infinite';
+                        }
+                    } else {
+                        if (cardElem) {
+                            cardElem.className = 'glass-panel target-card status-rto';
+                        }
+                        if (badgeElem) {
+                            badgeElem.textContent = target.status === "Unknown" ? 'MEMULAI' : 'RTO / DOWN';
+                            badgeElem.style.animation = target.status === "Unknown" ? 'none' : 'pulse-red 1.5s infinite';
+                        }
+                    }
+
+                    // Update Packet Loss progress bar
+                    const lossPct = Math.round((target.loss_pct || 0) * 100);
+                    const lossValElem = document.getElementById(`loss-val-${key}`);
+                    if (lossValElem) lossValElem.textContent = `${lossPct}%`;
+
+                    const progressElem = document.getElementById(`progress-${key}`);
+                    if (progressElem) progressElem.style.width = `${lossPct}%`;
+
+                    // Update detail metrics counts
+                    const successElem = document.getElementById(`success-${key}`);
+                    if (successElem) successElem.textContent = target.success_count;
+
+                    const failElem = document.getElementById(`fail-${key}`);
+                    if (failElem) failElem.textContent = target.fail_count;
+
+                    // Update Mikrotik action log
+                    const actionElem = document.getElementById(`action-${key}`);
+                    if (actionElem) {
+                        actionElem.textContent = target.last_action || 'Belum ada aksi';
+                        // Add color depending on actions
+                        if (target.last_action.includes('Triggered')) {
+                            actionElem.style.color = target.last_action.includes('OFF') ? 'var(--color-amber)' : 'var(--color-emerald)';
+                        } else if (target.last_action.includes('Failed')) {
+                            actionElem.style.color = 'var(--color-rose)';
+                        } else {
+                            actionElem.style.color = 'var(--text-secondary)';
+                        }
+                    }
+                });
+            }
+
+            // Update Logs Terminal (Urutan terbaru di paling atas, batasi 5 log terakhir)
+            if (data.recent_logs) {
+                const terminal = document.getElementById('terminal-logs');
+                const wasAtTop = terminal.scrollTop <= 50;
+
+                terminal.innerHTML = '';
+
+                // Ambil 5 item terakhir dan balikkan urutannya agar data terbaru muncul paling atas
+                const reversedLogs = data.recent_logs.slice(-5).reverse();
+
+                reversedLogs.forEach(line => {
+                    const div = document.createElement('div');
+                    div.className = 'log-line';
+                    div.textContent = line;
+
+                    // Class coloring by keyword in log line
+                    if (line.includes('[WARNING]') || line.includes('⚠')) {
+                        div.classList.add('log-warning');
+                    } else if (line.includes('[ERROR]') || line.includes('✗')) {
+                        div.classList.add('log-error');
+                    } else {
+                        div.classList.add('log-info');
+                    }
+
+                    terminal.appendChild(div);
+                });
+
+                // Auto scroll ke paling atas jika user tidak sedang scroll ke bawah membaca log lama
+                if (wasAtTop || terminal.innerHTML === '') {
+                    terminal.scrollTop = 0;
+                }
+            }
+        }
+
+        function setupRefresh() {
+            const intervalVal = parseInt(document.getElementById('refresh-interval').value);
+
+            // Clear existing timer if any
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+
+            if (intervalVal > 0) {
+                refreshTimer = setInterval(fetchData, intervalVal);
+                console.log(`Auto-refresh diset setiap ${intervalVal}ms`);
+            } else {
+                console.log("Auto-refresh dimatikan");
+            }
+        }
+
+        // Jalankan fetch data pas pertama kali web di-load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+            setupRefresh();
+        });
+    </script>
+</body>
+
+</html>

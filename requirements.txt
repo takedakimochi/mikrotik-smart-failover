@@ -1,0 +1,8 @@
+# Requirements untuk Sistem Failover Mikrotik
+# Install dengan: pip3 install -r requirements.txt
+
+# Koneksi ke Mikrotik via RouterOS API
+routeros-api>=0.18.0
+
+# Load konfigurasi dari file .env
+python-dotenv>=1.0.0

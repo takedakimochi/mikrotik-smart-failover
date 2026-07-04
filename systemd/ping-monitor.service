@@ -1,0 +1,17 @@
+[Unit]
+Description=Mikrotik Failover System
+After=network.target
+
+[Service]
+Type=simple
+User=safa
+WorkingDirectory=/home/safa/jaringan/aplikasi/mikrotik-sistem-failover
+ExecStart=/home/safa/jaringan/bin/python /home/safa/jaringan/aplikasi/mikrotik-sistem-failover/ping_monitor.py
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=ping-monitor
+
+[Install]
+WantedBy=multi-user.target
