@@ -1,6 +1,6 @@
 # Sistem Failover Monitoring Ping & Web Dashboard Mikrotik (Smart Version) 🚀
 
-Aplikasi Python super tangguh, cerdas, dan responsif untuk memantau stabilitas jalur koneksi internet (failover) pada router Mikrotik secara real-time. Aplikasi ini menggunakan metode ping paralel ke beberapa monitor IP per ISP, mengevaluasi status jaringan tiap detik dengan **State Machine Real-time**, serta dilengkapi dengan perlindungan **Anti-Flapping (Cooldown)** agar router lu gak meriang gara-gara gonta-ganti jalur terus!
+Aplikasi Python untuk mengontrol mikrotik (failover 2 isp) sekaligus memantau stabilitas jalur koneksi internet (failover) pada router Mikrotik secara real-time. Aplikasi ini menggunakan metode ping paralel ke beberapa monitor IP per ISP, mengevaluasi status jaringan tiap detik dengan **State Machine Real-time**, serta dilengkapi dengan perlindungan **Anti-Flapping (Cooldown)** agar router lu gak meriang gara-gara gonta-ganti jalur terus!
 
 ---
 
